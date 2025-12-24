@@ -1,11 +1,11 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
-import { AuthState, UserRole } from './types';
-import Login from './pages/Login';
-import ManagerDashboard from './pages/ManagerDashboard';
-import MemberDashboard from './pages/MemberDashboard';
-import SuperAdminDashboard from './pages/SuperAdminDashboard';
 
-// --- Auth Context ---
+import React, { useState, useEffect, createContext, useContext } from 'react';
+import { AuthState, UserRole } from './types.ts';
+import Login from './pages/Login.tsx';
+import ManagerDashboard from './pages/ManagerDashboard.tsx';
+import MemberDashboard from './pages/MemberDashboard.tsx';
+import SuperAdminDashboard from './pages/SuperAdminDashboard.tsx';
+
 interface AuthContextType {
   authState: AuthState;
   login: (role: UserRole, data: any, gymId?: string) => void;
@@ -20,7 +20,6 @@ export const useAuth = () => {
   return context;
 };
 
-// --- Main App ---
 export default function App() {
   const [authState, setAuthState] = useState<AuthState>({
     isAuthenticated: false,
@@ -28,11 +27,14 @@ export default function App() {
     role: null,
   });
 
-  // Check for existing session
   useEffect(() => {
-    const savedAuth = localStorage.getItem('gym_auth');
-    if (savedAuth) {
-      setAuthState(JSON.parse(savedAuth));
+    try {
+      const savedAuth = localStorage.getItem('gym_auth');
+      if (savedAuth) {
+        setAuthState(JSON.parse(savedAuth));
+      }
+    } catch (e) {
+      console.error("Auth hydration failed", e);
     }
   }, []);
 
@@ -68,31 +70,35 @@ export default function App() {
 
   return (
     <AuthContext.Provider value={{ authState, login, logout }}>
-      <div className="min-h-screen bg-gym-dark text-gym-text">
+      <div className="min-h-screen bg-gym-dark text-gym-text selection:bg-gym-accent selection:text-white">
         {authState.isAuthenticated && (
-           <nav className="border-b border-slate-800 bg-gym-dark/95 backdrop-blur sticky top-0 z-40">
+           <nav className="border-b border-slate-800 bg-gym-dark/95 backdrop-blur-xl sticky top-0 z-40 shadow-xl">
              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                <div className="flex justify-between h-16 items-center">
-                 <div className="flex items-center gap-3">
-                   <div className="w-8 h-8 rounded bg-gym-accent flex items-center justify-center">
-                     <i className="fas fa-dumbbell text-white"></i>
+                 <div className="flex items-center gap-3 group cursor-pointer">
+                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gym-accent to-emerald-700 flex items-center justify-center shadow-lg shadow-gym-accent/20 group-hover:scale-105 transition-transform">
+                     <i className="fas fa-dumbbell text-white text-lg"></i>
                    </div>
-                   <span className="font-bold text-xl tracking-tight text-white">GymPro<span className="text-gym-accent">Manager</span></span>
+                   <span className="font-extrabold text-2xl tracking-tight text-white">GymPro<span className="text-gym-accent">Plus</span></span>
                  </div>
                  <div className="flex items-center gap-4">
                    <div className="text-right hidden sm:block">
-                     <div className="text-sm font-medium text-white">
-                        {authState.role === UserRole.SUPER_ADMIN ? 'Super Admin' : 
+                     <div className="text-sm font-bold text-white">
+                        {authState.role === UserRole.SUPER_ADMIN ? 'System Admin' : 
                          authState.role === UserRole.MANAGER ? `Manager (${authState.currentGymId})` : 
                          (authState.user as any)?.name}
                      </div>
-                     <div className="text-xs text-slate-400 capitalize">{authState.role?.toLowerCase().replace('_', ' ')}</div>
+                     <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+                       {authState.role?.replace('_', ' ')}
+                     </div>
                    </div>
+                   <div className="h-8 w-px bg-slate-800 mx-2"></div>
                    <button 
                     onClick={logout}
-                    className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-full transition-colors"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-red-500/10 hover:border-red-500/20 border border-transparent transition-all"
                    >
                      <i className="fas fa-sign-out-alt"></i>
+                     <span className="text-xs font-bold hidden md:inline">Logout</span>
                    </button>
                  </div>
                </div>

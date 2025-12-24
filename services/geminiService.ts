@@ -1,11 +1,20 @@
 
 import { GoogleGenAI } from "@google/genai";
 
-// Initialize Gemini
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+// Safe API key retrieval to prevent "process is not defined" crash
+const getApiKey = () => {
+  try {
+    return (typeof process !== 'undefined' && process.env?.API_KEY) || '';
+  } catch {
+    return '';
+  }
+};
+
+const ai = new GoogleGenAI({ apiKey: getApiKey() });
 
 export const generateWhatsAppMessage = async (memberName: string, expiryDate: string, type: 'REMINDER' | 'WELCOME' | 'OFFER') => {
-  if (!process.env.API_KEY) return "Error: API Key missing.";
+  const key = getApiKey();
+  if (!key) return "Error: API Key missing in environment.";
   
   try {
     const response = await ai.models.generateContent({
@@ -32,7 +41,8 @@ export const generateWhatsAppMessage = async (memberName: string, expiryDate: st
 };
 
 export const getAIWorkoutTip = async (duration: number) => {
-  if (!process.env.API_KEY) return "Stay consistent and drink water!";
+  const key = getApiKey();
+  if (!key) return "Stay consistent and drink water!";
 
   try {
     const response = await ai.models.generateContent({
