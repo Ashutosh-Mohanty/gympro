@@ -1,16 +1,16 @@
+
 import { GoogleGenAI } from "@google/genai";
 
 // Initialize Gemini
-// Note: In a real production app, ensure API_KEY is handled securely via backend proxy.
-// For this demo, we assume process.env.API_KEY is available or injected.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
 export const generateWhatsAppMessage = async (memberName: string, expiryDate: string, type: 'REMINDER' | 'WELCOME' | 'OFFER') => {
   if (!process.env.API_KEY) return "Error: API Key missing.";
   
   try {
-    const prompt = `
-      Act as a professional and friendly gym manager.
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Act as a professional and friendly gym manager.
       Write a short, engaging WhatsApp message for a member named "${memberName}".
       
       Context:
@@ -21,12 +21,7 @@ export const generateWhatsAppMessage = async (memberName: string, expiryDate: st
       Requirements:
       - Include emojis.
       - Keep it under 50 words.
-      - Don't include subject lines or quotes.
-    `;
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
+      - Don't include subject lines or quotes.`,
     });
 
     return response.text;
@@ -41,7 +36,7 @@ export const getAIWorkoutTip = async (duration: number) => {
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-flash-preview',
       contents: `Give me one single, powerful, and scientific workout tip for someone who has been working out for ${duration} days. Keep it short (max 1 sentence).`,
     });
     return response.text;
