@@ -85,9 +85,18 @@ export const Select: React.FC<SelectProps> = ({ label, options, className = '', 
 };
 
 // --- Card ---
-export const Card: React.FC<{ children: React.ReactNode; className?: string; title?: string }> = ({ children, className = '', title }) => {
+// Added onClick prop to support interactive cards in ManagerDashboard
+export const Card: React.FC<{ 
+  children: React.ReactNode; 
+  className?: string; 
+  title?: string;
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
+}> = ({ children, className = '', title, onClick }) => {
   return (
-    <div className={`bg-gym-card rounded-xl p-6 border border-slate-700/50 shadow-xl ${className}`}>
+    <div 
+      className={`bg-gym-card rounded-xl p-6 border border-slate-700/50 shadow-xl ${className}`}
+      onClick={onClick}
+    >
       {title && <h3 className="text-lg font-semibold text-white mb-4">{title}</h3>}
       {children}
     </div>
