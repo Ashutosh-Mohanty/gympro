@@ -64,7 +64,7 @@ export default function App() {
         CurrentView = <MemberDashboard />;
         break;
       default:
-        CurrentView = <Login onLogin={login} />;
+        CurrentView = <div className="p-10 text-center text-slate-500">Session Error. Please log in again.</div>;
     }
   }
 

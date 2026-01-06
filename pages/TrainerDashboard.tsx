@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
-import { Card, Input, Button, Select } from '../components/UI';
-import { useAuth } from '../App';
+import { Card, Input, Button, Select } from '../components/UI.tsx';
+import { useAuth } from '../App.tsx';
 
 const TrainerDashboard: React.FC = () => {
   const { authState } = useAuth();
