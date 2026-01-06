@@ -1,3 +1,4 @@
+
 export enum UserRole {
   SUPER_ADMIN = 'SUPER_ADMIN',
   MANAGER = 'MANAGER',
@@ -30,10 +31,18 @@ export interface Member {
   age: number;
   amountPaid: number;
   
+  // New Physical Stats
+  height?: string;
+  weight?: string;
+  address?: string;
+  goal?: 'WEIGHT_LOSS' | 'MUSCLE_GAIN' | 'MAINTENANCE' | 'FLEXIBILITY' | 'ATHLETIC_PERFORMANCE';
+  registrationPaymentMode?: 'ONLINE' | 'CASH';
+  
   // Photos
   profilePhoto?: string; // Base64 string
   beforePhoto?: string; // Base64 string
   afterPhoto?: string; // Base64 string
+  idProofPhoto?: string; // Base64 string
   
   gymId: string;
   username: string; // For login
@@ -58,6 +67,13 @@ export interface Gym {
   name: string;
   managerPassword: string; // Password for the manager
   createdAt: string;
+  
+  // New Establishment Details
+  profilePhoto?: string;
+  email?: string;
+  phone?: string;
+  city?: string;
+  state?: string;
 }
 
 export interface AuthState {
@@ -70,4 +86,5 @@ export interface AuthState {
 export interface GymSettings {
   autoNotifyWhatsApp: boolean;
   gymName: string;
+  termsAndConditions?: string;
 }

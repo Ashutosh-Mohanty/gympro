@@ -1,21 +1,10 @@
 
 import { GoogleGenAI } from "@google/genai";
 
-// Safe API key retrieval to prevent "process is not defined" crash
-const getApiKey = () => {
-  try {
-    return (typeof process !== 'undefined' && process.env?.API_KEY) || '';
-  } catch {
-    return '';
-  }
-};
-
-const ai = new GoogleGenAI({ apiKey: getApiKey() });
+// Fix: Strictly follow the Google GenAI SDK initialization guidelines using process.env.API_KEY directly
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const generateWhatsAppMessage = async (memberName: string, expiryDate: string, type: 'REMINDER' | 'WELCOME' | 'OFFER') => {
-  const key = getApiKey();
-  if (!key) return "Error: API Key missing in environment.";
-  
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
@@ -41,9 +30,6 @@ export const generateWhatsAppMessage = async (memberName: string, expiryDate: st
 };
 
 export const getAIWorkoutTip = async (duration: number) => {
-  const key = getApiKey();
-  if (!key) return "Stay consistent and drink water!";
-
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',

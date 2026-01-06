@@ -1,129 +1,130 @@
+
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../App';
-import { Member } from '../types';
-import { Card, Badge, Button } from '../components/UI';
-import { getMemberStatus } from '../services/storage';
-import { getAIWorkoutTip } from '../services/geminiService';
+import { useAuth } from '../App.tsx';
+import { Member, GymSettings } from '../types.ts';
+import { Card, Badge, Button } from '../components/UI.tsx';
+import { getMemberStatus, getSettings } from '../services/storage.ts';
+import { getAIWorkoutTip } from '../services/geminiService.ts';
 
 const MemberDashboard: React.FC = () => {
   const { authState } = useAuth();
   const member = authState.user as Member;
   const status = getMemberStatus(member.expiryDate);
+  // Fix: getSettings() returns a Promise, so we must store the resolved value in state
+  const [settings, setSettings] = useState<GymSettings | null>(null);
   const [tip, setTip] = useState<string>('');
 
   useEffect(() => {
-    // Generate a quick AI tip on load
-    const fetchTip = async () => {
+    const fetchMemberData = async () => {
         const daysActive = Math.ceil((new Date().getTime() - new Date(member.joinDate).getTime()) / (1000 * 3600 * 24));
-        const t = await getAIWorkoutTip(daysActive);
+        // Fetch both tip and settings in parallel to optimize loading
+        const [t, s] = await Promise.all([
+          getAIWorkoutTip(daysActive),
+          getSettings()
+        ]);
         setTip(t);
+        setSettings(s);
     };
-    fetchTip();
+    fetchMemberData();
   }, [member.joinDate]);
 
-  if (!member) return <div>Loading...</div>;
+  if (!member) return <div className="p-20 text-center text-slate-500 font-bold uppercase tracking-widest">Retrieving Member Profile...</div>;
 
   const daysLeft = Math.ceil((new Date(member.expiryDate).getTime() - new Date().getTime()) / (1000 * 3600 * 24));
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6 pb-20">
       {/* Profile Header */}
-      <Card className="flex flex-col md:flex-row gap-6 items-center md:items-start bg-gradient-to-r from-slate-800 to-slate-900">
-        <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden border-4 border-slate-600 shadow-xl">
-           {member.profilePhoto ? (
-               <img src={member.profilePhoto} className="w-full h-full object-cover" />
-           ) : (
-               <span className="text-4xl font-bold text-slate-400">{member.name.charAt(0)}</span>
-           )}
+      <Card className="flex flex-col md:flex-row gap-6 items-center md:items-start bg-gradient-to-br from-slate-800 to-slate-900 border-gym-accent/20 shadow-2xl">
+        <div className="w-32 h-32 rounded-3xl bg-slate-800 flex items-center justify-center overflow-hidden border-4 border-slate-700 shadow-2xl shadow-black/50">
+           {member.profilePhoto ? <img src={member.profilePhoto} className="w-full h-full object-cover" /> : <span className="text-5xl font-black text-slate-600">{member.name.charAt(0)}</span>}
         </div>
-        <div className="flex-1 text-center md:text-left w-full">
+        <div className="flex-1 text-center md:text-left">
            <div className="flex flex-col md:flex-row items-center md:items-start justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-white">{member.name}</h1>
-                <p className="text-slate-400">Member since {new Date(member.joinDate).getFullYear()}</p>
+                <h1 className="text-3xl font-black text-white tracking-tight">{member.name}</h1>
+                <p className="text-slate-500 font-medium">Training Focus: <span className="text-gym-accent font-black uppercase tracking-widest text-xs ml-1">{member.goal?.replace('_', ' ') || 'GENERAL FITNESS'}</span></p>
               </div>
-              <div className="mt-2 md:mt-0">
-                 <Badge status={status} />
-              </div>
+              <div className="mt-2 md:mt-0 shadow-lg"><Badge status={status} /></div>
            </div>
            
-           <div className="mt-6 grid grid-cols-2 gap-4 text-center md:text-left">
-              <div className="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
-                 <div className="text-xs text-slate-500 uppercase">Plan Expiry</div>
-                 <div className={`text-lg font-bold ${daysLeft < 5 ? 'text-red-400' : 'text-gym-accent'}`}>
-                    {new Date(member.expiryDate).toLocaleDateString()}
-                 </div>
-                 <div className="text-xs text-slate-400">{daysLeft > 0 ? `${daysLeft} days left` : 'Expired'}</div>
+           <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800 text-center shadow-inner">
+                 <div className="text-[9px] text-slate-500 uppercase font-black tracking-tighter">Access Dues</div>
+                 <div className={`text-xl font-black ${daysLeft < 5 ? 'text-red-400' : 'text-gym-accent'}`}>{daysLeft > 0 ? daysLeft : 0} Days</div>
               </div>
-              <div className="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
-                 <div className="text-xs text-slate-500 uppercase">Current Plan</div>
-                 <div className="text-lg font-bold text-white">{member.planDurationDays} Days</div>
+              <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800 text-center shadow-inner">
+                 <div className="text-[9px] text-slate-500 uppercase font-black tracking-tighter">Plan Tenure</div>
+                 <div className="text-xl font-black text-white">{member.planDurationDays}D</div>
+              </div>
+              <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800 text-center shadow-inner">
+                 <div className="text-[9px] text-slate-500 uppercase font-black tracking-tighter">Identity Height</div>
+                 <div className="text-xl font-black text-white">{member.height || 'N/A'}</div>
+              </div>
+              <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800 text-center shadow-inner">
+                 <div className="text-[9px] text-slate-500 uppercase font-black tracking-tighter">Identity Weight</div>
+                 <div className="text-xl font-black text-white">{member.weight || 'N/A'}</div>
               </div>
            </div>
         </div>
       </Card>
 
-      {/* Progress Photos */}
-      {(member.beforePhoto || member.afterPhoto) && (
-          <Card title="My Progress">
-              <div className="grid grid-cols-2 gap-4">
-                  <div>
-                      <h4 className="text-sm font-medium text-slate-400 mb-2 text-center">Before</h4>
-                      <div className="aspect-[3/4] bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
-                          {member.beforePhoto ? <img src={member.beforePhoto} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-slate-600">No Photo</div>}
-                      </div>
-                  </div>
-                  <div>
-                      <h4 className="text-sm font-medium text-slate-400 mb-2 text-center">After</h4>
-                      <div className="aspect-[3/4] bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
-                          {member.afterPhoto ? <img src={member.afterPhoto} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-slate-600">No Photo</div>}
-                      </div>
-                  </div>
-              </div>
-          </Card>
-      )}
-
-      {/* Supplements & Billing */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card title="Supplement History">
-            <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                {member.supplementHistory && member.supplementHistory.length > 0 ? (
-                    member.supplementHistory.map(supp => (
-                        <div key={supp.id} className="p-3 bg-slate-800/50 rounded-lg border border-slate-700/50 flex justify-between items-center">
-                            <div>
-                                <div className="font-medium text-white">{supp.productName}</div>
-                                <div className="text-xs text-slate-400">Date: {new Date(supp.purchaseDate).toLocaleDateString()}</div>
-                            </div>
-                            <div className="text-right">
-                                <div className="text-gym-accent font-bold">${supp.price}</div>
-                                {supp.endDate && <div className="text-[10px] text-slate-500">Ends: {new Date(supp.endDate).toLocaleDateString()}</div>}
-                            </div>
-                        </div>
-                    ))
-                ) : (
-                    <div className="text-slate-500 text-sm">No supplement purchases recorded.</div>
-                )}
-            </div>
+        <Card title="AI Wellness Insight" className="border-gym-accent/10 shadow-xl">
+             <div className="flex items-start gap-4">
+                 <div className="w-12 h-12 rounded-2xl bg-gym-accent/10 flex items-center justify-center text-gym-accent flex-shrink-0 shadow-inner">
+                    <i className="fas fa-magic text-xl"></i>
+                 </div>
+                 <p className="text-slate-300 italic text-sm font-medium leading-relaxed mt-1">"{tip || 'Analyzing your training evolution...'}"</p>
+             </div>
         </Card>
 
-        <Card title="AI Trainer Tip">
-             <div className="flex items-start gap-3">
-                 <i className="fas fa-robot text-2xl text-gym-accent mt-1"></i>
-                 <div>
-                     <p className="text-slate-300 italic">"{tip || 'Loading your personalized tip...'}"</p>
-                 </div>
-             </div>
+        <Card title="Gym Establishment Policy" className="h-64 flex flex-col shadow-xl">
+            <div className="flex-1 overflow-y-auto custom-scrollbar text-xs text-slate-400 leading-relaxed pr-2 font-medium">
+                {/* Fix: safely access termsAndConditions from the resolved settings state */}
+                {settings?.termsAndConditions || 'Policies for this establishment have not been published yet.'}
+            </div>
         </Card>
       </div>
 
-      <Card title="Contact Gym">
-         <div className="space-y-4">
-            <p className="text-sm text-slate-400">Need to extend your plan or have a question? Contact the manager.</p>
-            <Button className="w-full bg-[#25D366] hover:bg-[#20bd5a]" onClick={() => window.open('https://wa.me/1234567890', '_blank')}>
-               <i className="fab fa-whatsapp mr-2"></i> Chat with Manager
-            </Button>
-         </div>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card title="Transformation Track" className="shadow-xl">
+              <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                      <div className="aspect-[3/4] bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl">
+                          {member.beforePhoto ? <img src={member.beforePhoto} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-slate-700 text-[10px] font-black uppercase text-center p-4">Baseline Phase Missing</div>}
+                      </div>
+                      <p className="text-[9px] text-center font-black text-slate-500 uppercase tracking-widest">Enrollment Phase</p>
+                  </div>
+                  <div className="space-y-3">
+                      <div className="aspect-[3/4] bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl">
+                          {member.afterPhoto ? <img src={member.afterPhoto} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-slate-700 text-[10px] font-black uppercase text-center p-4">Result Phase Missing</div>}
+                      </div>
+                      <p className="text-[9px] text-center font-black text-gym-accent uppercase tracking-widest">Current Evolution</p>
+                  </div>
+              </div>
+          </Card>
+
+          <Card title="Retail & Supplement History" className="shadow-xl">
+              <div className="max-h-80 overflow-y-auto custom-scrollbar pr-2 space-y-3">
+                  {member.supplementHistory && member.supplementHistory.length > 0 ? (
+                      member.supplementHistory.slice().reverse().map(s => (
+                          <div key={s.id} className="bg-slate-900/40 p-3 rounded-xl border border-slate-800 flex justify-between items-center hover:bg-slate-900/60 transition-colors shadow-inner">
+                              <div>
+                                  <div className="text-xs font-black text-white uppercase">{s.productName}</div>
+                                  <div className="text-[9px] text-slate-500 font-bold">{new Date(s.purchaseDate).toLocaleDateString()}</div>
+                              </div>
+                              <div className="text-purple-400 font-black tracking-tight">$ {s.price}</div>
+                          </div>
+                      ))
+                  ) : (
+                      <div className="py-20 text-center text-slate-700 font-black uppercase tracking-widest text-[10px] border border-dashed border-slate-800 rounded-2xl">
+                          No Retail Logs found
+                      </div>
+                  )}
+              </div>
+          </Card>
+      </div>
     </div>
   );
 };
